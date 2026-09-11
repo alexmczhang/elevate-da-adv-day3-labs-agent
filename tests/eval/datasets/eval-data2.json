@@ -1,0 +1,135 @@
+{
+  "eval_cases": [
+    {
+      "eval_case_id": "uc_2_2_dual_cashier_baseline_parallel",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "What is Cashier CASH_1190's live 1-hour override rate right now, compared to their 7-day historical override baseline?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Execute parallel dispatch across Bigtable (retrieving real-time 1-hour rolling override counts) and BigQuery analytics (retrieving 7-day historical override baseline for CASH_1190). Synthesize a side-by-side comparative analysis highlighting any statistically anomalous deviation."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "uc_2_3_promo_abuse_investigation_multiturn",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Show cashiers with active cashier promo abuse alerts in the last 7 days."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Based on BigQuery anomaly scoring for the past 7 days, Cashier CASH_1190 at Store 48 has 14 high-severity promo abuse alerts with a 38.5% override rate, followed by CASH_2041 with 6 alerts."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Retrieve the detailed checkout logs for the top offender CASH_1190."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Retrieve the specific checkout transaction records for Cashier CASH_1190, isolating the timestamps, line items, and supervisor override approvals that contributed to the promo abuse alerts."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "uc_2_1_warranty_triage_multiturn",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "A customer is requesting a return for transaction TXN-20260312-0015811. What item was purchased?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "Transaction TXN-20260312-0015811 was recorded on 2026-03-12 for a Toshiba TCx 810 POS Touch Display (SKU-TOS-810-D) covered under a 1-year Limited Manufacturer Warranty."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Does the warranty cover physical screen cracks caused by dropped equipment?"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "According to the certified hardware warranty policy for Toshiba TCx 810, physical impact damage, screen cracks, and accidental drops are explicitly excluded from standard warranty coverage. Recommend the store manager initiate an out-of-warranty repair quote."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
