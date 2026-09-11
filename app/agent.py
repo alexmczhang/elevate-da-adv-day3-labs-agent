@@ -13,16 +13,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+from google import genai
 from google.adk.agents import Agent
 from google.adk.apps import App
 from google.adk.models import Gemini
+from google.adk.plugins.bigquery_agent_analytics_plugin import BigQueryAgentAnalyticsPlugin
 from google.genai import types
 
 from app.tools.analytics_tool import cymbal_analytics_function_tool
 from app.tools.bigtable_tool import bigtable_mcp_toolset, bigtable_realtime_metrics_tool
 from app.tools.rag_tool import pos_troubleshooting_function_tool
 
+PROJECT_ID = os.getenv("PROJECT_ID", "da-c3-group3")
+BQ_TELEMETRY_DATASET = os.getenv("BQ_TELEMETRY_DATASET", "agent_telemetry")
+REGION = os.getenv("REGION", "us-central1")
+GEMINI_LOCATION = os.getenv("GEMINI_LOCATION", "global")
+
 MODEL = "gemini-3.6-flash"
+genai_client = genai.Client(
+    vertexai=True,
+    project=PROJECT_ID,
+    location=GEMINI_LOCATION,
+)
+
 
 COORDINATOR_SYSTEM_INSTRUCTION = """You are Cymbal Operations Agent (cymbal_operations_agent), an enterprise operational intelligence assistant for Cymbal Retail.
 You orchestrate across three specialized backends:
@@ -70,6 +84,7 @@ cymbal_operations_agent = Agent(
     name="cymbal_operations_agent",
     model=Gemini(
         model=MODEL,
+        client=genai_client,
         retry_options=types.HttpRetryOptions(attempts=3),
     ),
     instruction=COORDINATOR_SYSTEM_INSTRUCTION,
@@ -80,9 +95,16 @@ cymbal_operations_agent = Agent(
     ],
 )
 
+bq_analytics_plugin = BigQueryAgentAnalyticsPlugin(
+    project_id=PROJECT_ID,
+    dataset_id=BQ_TELEMETRY_DATASET,
+    location=REGION,
+)
+
 root_agent = cymbal_operations_agent
 
 app = App(
     root_agent=cymbal_operations_agent,
     name="app",
+    plugins=[bq_analytics_plugin],
 )

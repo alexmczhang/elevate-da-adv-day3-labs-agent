@@ -26,9 +26,15 @@ from google.cloud import logging as google_cloud_logging
 
 from app.app_utils import services
 from app.app_utils.a2a import attach_a2a_routes
+from app.app_utils.reasoning_engine_adapter import (
+    attach_reasoning_engine_routes,
+)
 from app.app_utils.typing import Feedback
 
 load_dotenv()
+otel_to_cloud = os.environ.get(
+    "GOOGLE_CLOUD_AGENT_ENGINE_ENABLE_TELEMETRY", ""
+).lower() in ("true", "1")
 _, project_id = google.auth.default()
 logging_client = google_cloud_logging.Client()
 logger = logging_client.logger(__name__)
@@ -41,6 +47,9 @@ AGENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 @contextlib.asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    # Runner for the A2A path, sharing the same session/artifact services as the
+    # adk_api and reasoning_engine paths (see services.py). Imported here so the
+    # agent is built after env/telemetry setup.
     from app.agent import app as adk_app
     from app.agent import root_agent
 
@@ -50,6 +59,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         artifact_service=services.get_artifact_service(),
         auto_create_session=True,
     )
+    # Shared by the A2A path and the reasoning_engine adapter routes.
     app.state.runner = runner
     app.state.agent_app_name = adk_app.name
     await attach_a2a_routes(
@@ -68,11 +78,16 @@ app: FastAPI = get_fast_api_app(
     artifact_service_uri=services.ARTIFACT_SERVICE_URI,
     allow_origins=allow_origins,
     session_service_uri=services.SESSION_SERVICE_URI,
-    otel_to_cloud=True,
+    otel_to_cloud=otel_to_cloud,
     lifespan=lifespan,
 )
 app.title = "cymbal-ops-agent"
 app.description = "API for interacting with the Agent cymbal-ops-agent"
+
+
+# Proxy routes so the Vertex AI Console Playground (reasoning_engine SDK) can
+# talk to this agent alongside the native adk_api routes.
+attach_reasoning_engine_routes(app)
 
 
 @app.post("/feedback")

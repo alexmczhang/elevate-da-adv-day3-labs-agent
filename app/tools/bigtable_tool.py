@@ -23,6 +23,25 @@ IMPERSONATION_SA = "cymbal-sa-data@da-c3-group3.iam.gserviceaccount.com"
 def get_bigtable_mcp_oidc_token(target_audience: str | None = None) -> str:
     """Generates a GCP OIDC ID token for authenticating to the Bigtable Cloud Run MCP service."""
     audience = target_audience or DEFAULT_BIGTABLE_MCP_URL
+    # 1. Standard GCP method: google.oauth2.id_token (works in Agent Runtime, Cloud Run, and with ADC)
+    try:
+        from google.auth.transport.requests import Request
+        import google.oauth2.id_token
+        auth_req = Request()
+        return google.oauth2.id_token.fetch_id_token(auth_req, audience)
+    except Exception as e:
+        logger.debug("google.oauth2.id_token fetch: %s", e)
+
+    # 2. Metadata server directly (GCP compute environment)
+    try:
+        metadata_url = f"http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience={audience}"
+        req = urllib.request.Request(metadata_url, headers={"Metadata-Flavor": "Google"})
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            return resp.read().decode("utf-8").strip()
+    except Exception as e:
+        logger.debug("Metadata server identity fetch: %s", e)
+
+    # 3. Workstation fallback using gcloud CLI if available
     try:
         token = (
             subprocess.check_output(
@@ -44,24 +63,22 @@ def get_bigtable_mcp_oidc_token(target_audience: str | None = None) -> str:
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
             return data["token"]
-    except Exception as e:
-        logger.warning(
-            "Failed to generate impersonated ID token: %s. Falling back to gcloud identity token.",
-            e,
-        )
-        try:
-            return (
-                subprocess.check_output(
-                    ["gcloud", "auth", "print-identity-token"],
-                    stderr=subprocess.DEVNULL,
-                )
-                .decode()
-                .strip()
+    except Exception:
+        pass
+
+    try:
+        return (
+            subprocess.check_output(
+                ["gcloud", "auth", "print-identity-token"],
+                stderr=subprocess.DEVNULL,
             )
-        except Exception as fallback_err:
-            raise RuntimeError(
-                f"Could not generate GCP OIDC Token: {fallback_err}"
-            ) from e
+            .decode()
+            .strip()
+        )
+    except Exception:
+        pass
+
+    return ""
 
 
 def create_bigtable_mcp_toolset(
