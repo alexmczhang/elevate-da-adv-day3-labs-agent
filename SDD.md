@@ -960,29 +960,39 @@ All cloud infrastructure, IAM permissions, data policies, and pipelines are decl
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, current_date, when
 
-spark = SparkSession.builder \
-    .appName("Cymbal-Nightly-Inventory-Reconciliation") \
-    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+spark = (
+    SparkSession.builder.appName("Cymbal-Nightly-Inventory-Reconciliation")
+    .config(
+        "spark.sql.extensions",
+        "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+    )
     .getOrCreate()
+)
 
 # Load POS sales and physical inventory snapshots
 pos_df = spark.read.format("bigquery").load("cymbal_silver.daily_pos_summary")
 inv_df = spark.read.format("iceberg").load("cymbal-lakehouse.raw_inventory_snapshot")
 
 # Compute stock variances and reconciliation status
-reconciled_df = inv_df.join(pos_df, on=["store_id", "item_id"], how="left") \
-    .withColumn("variance_qty", col("shelf_qty") + col("backroom_qty") - col("opening_qty") + col("units_sold")) \
-    .withColumn("reconciliation_status", 
+reconciled_df = (
+    inv_df.join(pos_df, on=["store_id", "item_id"], how="left")
+    .withColumn(
+        "variance_qty",
+        col("shelf_qty") + col("backroom_qty") - col("opening_qty") + col("units_sold"),
+    )
+    .withColumn(
+        "reconciliation_status",
         when(col("variance_qty") == 0, "BALANCED")
         .when(col("variance_qty") > 0, "OVERAGE")
-        .otherwise("SHRINKAGE")) \
+        .otherwise("SHRINKAGE"),
+    )
     .withColumn("business_date", current_date())
+)
 
 # Append to BigLake Iceberg Gold Ledger
-reconciled_df.write \
-    .format("iceberg") \
-    .mode("append") \
-    .save("cymbal_gold.gold_inventory_reconciliation_ledger")
+reconciled_df.write.format("iceberg").mode("append").save(
+    "cymbal_gold.gold_inventory_reconciliation_ledger"
+)
 ```
 
 ### 2. BigQuery Data Masking Policy DDL

@@ -2,28 +2,67 @@
   "eval_cases": [
     {
       "eval_case_id": "greeting",
+      "description": "Verify basic conversational greeting and agent capability overview without tool dispatch",
       "prompt": {
         "role": "user",
-        "parts": [{"text": "Hello, what can you help me with?"}]
-      }
-    },
-    {
-      "eval_case_id": "weather_query",
-      "prompt": {
-        "role": "user",
-        "parts": [{"text": "What's the weather like in San Francisco?"}]
-      }
-    },
-    {
-      "eval_case_id": "capital_lookup",
-      "prompt": {
-        "role": "user",
-        "parts": [{"text": "What is the capital of France?"}]
+        "parts": [
+          {
+            "text": "Hello, what can you help me with?"
+          }
+        ]
       },
       "reference": {
         "response": {
           "role": "model",
-          "parts": [{"text": "The capital of France is Paris."}]
+          "parts": [
+            {
+              "text": "Hello! I am the Cymbal Operations Agent, your enterprise operational intelligence assistant for Cymbal Retail. I can help you with:\n1. POS hardware diagnostics and field recovery protocols (Toshiba TCx 810 manuals)\n2. BigQuery warehouse analytics, inventory stockout risk triage, and warranty policy retrieval\n3. Cloud Bigtable real-time 1-hour cashier metrics, override tracking, and audit flags\nHow can I assist your store operations today?"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "weather_query",
+      "description": "Test boundary refusal on non-retail off-topic query (weather)",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "What's the weather like in San Francisco?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "I am the Cymbal Operations Agent, designed to assist exclusively with Cymbal Retail store operations, POS hardware troubleshooting, and inventory/cashier analytics. Weather forecasts and general inquiries are outside my operational scope."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "capital_lookup",
+      "description": "Test boundary refusal on general knowledge capital lookup",
+      "prompt": {
+        "role": "user",
+        "parts": [
+          {
+            "text": "What is the capital of France?"
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "I am designed exclusively to assist with Cymbal Retail operational intelligence, POS hardware diagnostics, and store analytics. General geography trivia and external knowledge lookups are outside my operational scope."
+            }
+          ]
         }
       }
     }

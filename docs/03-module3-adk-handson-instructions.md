@@ -103,7 +103,10 @@ Implement a tool function or toolset wrapper (`cymbal_analytics_tool`) leveragin
 - **Potential Regional Issue Workaround:** If your Data Agent was provisioned in a non-global region (e.g. `location="us"` or `"eu"`), ADK 2.5 routes calls to the global endpoint by default, causing an HTTP 403 Forbidden error. To resolve this for regional Data Agents, include the base URL override before invoking `ask_data_agent`:
   ```python
   import google.adk.tools.data_agent.data_agent_tool as data_agent_tool
-  data_agent_tool.BASE_URL = f"https://geminidataanalytics.{location}.rep.googleapis.com/v1beta"
+
+  data_agent_tool.BASE_URL = (
+      f"https://geminidataanalytics.{location}.rep.googleapis.com/v1beta"
+  )
   ```
 
 ---

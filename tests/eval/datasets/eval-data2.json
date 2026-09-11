@@ -2,6 +2,7 @@
   "eval_cases": [
     {
       "eval_case_id": "uc_2_2_dual_cashier_baseline_parallel",
+      "description": "Parallel dispatch comparing live 1-hour Bigtable metrics against 7-day BigQuery historical baseline",
       "prompt": {
         "role": "user",
         "parts": [
@@ -23,6 +24,7 @@
     },
     {
       "eval_case_id": "uc_2_3_promo_abuse_investigation_multiturn",
+      "description": "Sequential multi-turn cross-cloud investigation querying BigQuery anomaly alerts and AWS S3 silver_pos_transactions federated checkout logs",
       "agent_data": {
         "turns": [
           {
@@ -56,7 +58,7 @@
                   "role": "user",
                   "parts": [
                     {
-                      "text": "Retrieve the detailed checkout logs for the top offender CASH_1190."
+                      "text": "Retrieve historical checkout logs for the top offender CASH_1190 from AWS S3 silver_pos_transactions."
                     }
                   ]
                 }
@@ -70,7 +72,7 @@
           "role": "model",
           "parts": [
             {
-              "text": "Retrieve the specific checkout transaction records for Cashier CASH_1190, isolating the timestamps, line items, and supervisor override approvals that contributed to the promo abuse alerts."
+              "text": "Execute a federated cross-cloud query against AWS S3 Glue Catalog table cymbal-lakehouse.elevate_data.silver_pos_transactions via BigLake without data movement to inspect Cashier CASH_1190's historical checkout logs, isolating timestamps, discount amounts, and supervisor override approvals."
             }
           ]
         }
@@ -78,6 +80,7 @@
     },
     {
       "eval_case_id": "uc_2_1_warranty_triage_multiturn",
+      "description": "Multi-turn warranty triage checking item purchase and clarifying physical damage policy exclusions",
       "agent_data": {
         "turns": [
           {
@@ -126,6 +129,118 @@
           "parts": [
             {
               "text": "According to the certified hardware warranty policy for Toshiba TCx 810, physical impact damage, screen cracks, and accidental drops are explicitly excluded from standard warranty coverage. Recommend the store manager initiate an out-of-warranty repair quote."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "mt_cross_domain_switch",
+      "description": "Multi-turn intent switch from POS printer fix to inventory stockout check",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "How do I fix ERR-PRN-2002 on Lane 3?"
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "To clear ERR-PRN-2002 cutter lock: 1. Power off the printer. 2. Open the front cutter access door and manually rotate the knurled cutter gear until the blade retracts to home position. 3. Clear jammed paper fragments, close the cover firmly, power on, and execute a self-test print."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Now check if Store 8 has items with less than 20 hours stock cover."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "Switching domain from POS hardware diagnostics to warehouse inventory analytics via cymbal_analytics_tool: Querying BigQuery inventory ledger for Store 8 to identify SKUs with estimated stock cover under 20.0 hours and report current on-hand quantities."
+            }
+          ]
+        }
+      }
+    },
+    {
+      "eval_case_id": "mt_guardrail_date_clarification",
+      "description": "Multi-turn date range clarification guardrail pausing on unpartitioned query then resuming with date filter",
+      "agent_data": {
+        "turns": [
+          {
+            "turn_index": 0,
+            "events": [
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Show transaction logs for cashier CASH_1164."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "agent",
+                "content": {
+                  "role": "model",
+                  "parts": [
+                    {
+                      "text": "To prevent full-table scans and ensure optimal query performance, please specify a date range or time window (e.g., last 3 days, past 7 days, or a specific transaction date) for Cashier CASH_1164's transaction logs."
+                    }
+                  ]
+                }
+              },
+              {
+                "author": "user",
+                "content": {
+                  "role": "user",
+                  "parts": [
+                    {
+                      "text": "Show logs for the last 3 days."
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "reference": {
+        "response": {
+          "role": "model",
+          "parts": [
+            {
+              "text": "With the 3-day partition date range specified, executing query via cymbal_analytics_tool to retrieve transaction logs for Cashier CASH_1164 filtered to the last 3 days without triggering full-table scans."
             }
           ]
         }
