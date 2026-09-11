@@ -1,0 +1,31 @@
+sources:
+  cymbal-operations-bigtable:
+    kind: bigtable
+    project: da-c3-group3
+    instance: operations-db
+
+tools:
+  read_cashier_realtime_alerts:
+    kind: bigtable-sql
+    source: cymbal-operations-bigtable
+    description: "Read live 1-hour rolling metrics, anomaly flags, and audit status for a specific cashier by store and cashier ID."
+    statement: |
+      SELECT
+        CAST(_key AS STRING) AS row_key,
+        CAST(flags['audit_status'] AS STRING) AS audit_status,
+        CAST(stats['last_event_ts'] AS STRING) AS last_event_ts,
+        TO_INT64(stats['cashier_1h_manual_override_count']) AS cashier_1h_manual_override_count,
+        TO_INT64(stats['cashier_1h_promo_count']) AS cashier_1h_promo_count,
+        TO_INT64(stats['cashier_1h_txn_count']) AS cashier_1h_txn_count,
+        stats['cashier_1h_avg_discount_pct'] AS cashier_1h_avg_discount_pct,
+        stats['cashier_1h_promo_rate'] AS cashier_1h_promo_rate,
+        stats['cashier_1h_total_discount_usd'] AS cashier_1h_total_discount_usd,
+        stats['risk_score'] AS risk_score
+      FROM cashier_realtime_alerts
+      WHERE CAST(_key AS STRING) LIKE @key_prefix
+      ORDER BY row_key ASC
+      LIMIT 1;
+    parameters:
+      - name: key_prefix
+        type: string
+        description: "Row key prefix to search for, e.g. STORE_048#CASH_1190%"
